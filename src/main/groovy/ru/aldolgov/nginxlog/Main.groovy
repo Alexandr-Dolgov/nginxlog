@@ -28,7 +28,7 @@ class Main {
         //7. столбец t2 : изменить тип на long, переименовать в t2_ms
 
         int offset = 1
-        int maxRows = 1000
+        int maxRows = 5000
         List<GroovyRowResult> results = sql.rows("SELECT * FROM logs", offset, maxRows)
         while (results != null && results.size() > 0) {
             for (GroovyRowResult result : results) {
@@ -73,10 +73,8 @@ class Main {
                             """,
                             [user, isAdmin, dt,
                              httpMethod, url, httpProtocolVersion,
-                             answer, sizeBytes, t2Ms, t2Ms]
+                             answer, sizeBytes, t1Ms, t2Ms]
                     )
-                    String s = null
-
                 } catch (Exception e) {
                     println "exception occurred when proceed rows with id=${result.id}"
                     e.printStackTrace()
