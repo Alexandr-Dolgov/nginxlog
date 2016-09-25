@@ -33,29 +33,54 @@ class Main {
         while (results != null && results.size() > 0) {
             for (GroovyRowResult result : results) {
 
-                String user = result.user in ['-', 'null', null] ? null : result.user
+                try {
+                    String user = result.user in ['-', 'null', null] ? null : result.user
 
-                Boolean isAdmin = (user != null && !user.startsWith('a'))
+                    Boolean isAdmin = false
+                    if (user != null) {
+                        char char0 = user.charAt(0)
+                        char char1 = user.charAt(1)
+                        isAdmin = (char0 == (char)'a') && (char1 >= (char)'0') && (char1 <= (char)'9')
+                    }
 
-                Date dt = new Date().parse("dd/MMM/yyyy:hh:mm:ss Z", (String)result.dt)
+                    Date dt = new Date().parse("dd/MMM/yyyy:hh:mm:ss Z", (String)result.dt)
 
-                String urlOriginal = result.url
-                List urls = urlOriginal.split(' ')
-                String httpMethod = urls[0]
-                String url = urls[1]
-                String httpProtocolVersion = urls[2]
+                    String urlOriginal = result.url
+                    List urls = urlOriginal.split(' ')
+                    String httpMethod = urls[0]
+                    String url = urls[1]
+                    String httpProtocolVersion = urls[2]
 
-                Long answer = Long.parseLong((String)result.answer)
+                    Long answer = Long.parseLong((String)result.answer)
 
-                Long sizeBytes = Long.parseLong((String)result.size)
+                    Long sizeBytes = Long.parseLong((String)result.size)
 
-                String t1Str = result.t1
-                Double t1Ms = (t1Str == '-') ? null : (long)(Double.parseDouble(t1Str) * 1000)
+                    String t1Str = result.t1
+                    Double t1Ms = (t1Str == '-') ? null : (long)(Double.parseDouble(t1Str) * 1000)
 
-                String t2Str = result.t2
-                Double t2Ms = (t2Str == '-') ? null : (long)(Double.parseDouble(t2Str) * 1000)
+                    String t2Str = result.t2
+                    Double t2Ms = (t2Str == '-') ? null : (long)(Double.parseDouble(t2Str) * 1000)
 
-                String s = ''
+                    sql.executeInsert("""
+                          INSERT INTO logs2 (
+                            user, is_admin, dt,
+                            http_method, url, http_protocol_version,
+                            answer, size_bytes, t1_ms, t2_ms)
+                          VALUES (
+                            ?, ?, ?,
+                            ?, ?, ?,
+                            ?, ?, ?, ?)
+                            """,
+                            [user, isAdmin, dt,
+                             httpMethod, url, httpProtocolVersion,
+                             answer, sizeBytes, t2Ms, t2Ms]
+                    )
+                    String s = null
+
+                } catch (Exception e) {
+                    println "exception occurred when proceed rows with id=${result.id}"
+                    e.printStackTrace()
+                }
             }
             offset += maxRows
             results = sql.rows("SELECT * FROM logs", offset, maxRows)
