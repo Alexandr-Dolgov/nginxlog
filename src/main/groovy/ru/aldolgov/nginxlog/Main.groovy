@@ -34,13 +34,13 @@ class Main {
             for (GroovyRowResult result : results) {
 
                 try {
-                    String user = result.user in ['-', 'null', null] ? null : result.user
+                    String user = (result.user in ['-', 'null', null]) ? null : result.user
 
                     Boolean isAdmin = false
                     if (user != null) {
                         char char0 = user.charAt(0)
                         char char1 = user.charAt(1)
-                        isAdmin = (char0 == (char)'a') && (char1 >= (char)'0') && (char1 <= (char)'9')
+                        isAdmin = !((char0 == (char)'a') && (char1 >= (char)'0') && (char1 <= (char)'9'))
                     }
 
                     Date dt = new Date().parse("dd/MMM/yyyy:hh:mm:ss Z", (String)result.dt)
