@@ -8,7 +8,7 @@ class Main {
     static void main(String[] args) {
         def url = 'jdbc:mysql://localhost:3306/nginxlog'
         def user = 'root'
-        def password = 'abcdef1'
+        def password = 'root'
         def driver = 'com.mysql.jdbc.Driver'
         def sql = Sql.newInstance(url, user, password, driver)
 
