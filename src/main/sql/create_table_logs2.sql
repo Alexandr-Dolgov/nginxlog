@@ -5,6 +5,7 @@ CREATE TABLE `logs2` (
   `dt` datetime DEFAULT NULL,
   `http_method` varchar(100) DEFAULT NULL,
   `url` varchar(100) DEFAULT NULL,
+  `params` varchar(100) DEFAULT NULL,
   `http_protocol_version` varchar(100) DEFAULT NULL,
   `answer` bigint(20) DEFAULT NULL,
   `size_bytes` bigint(20) DEFAULT NULL,

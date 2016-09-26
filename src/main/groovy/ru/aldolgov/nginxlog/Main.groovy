@@ -29,7 +29,7 @@ class Main {
 
         int offset = 1
         int maxRows = 5000
-        List<GroovyRowResult> results = sql.rows("SELECT * FROM logs", offset, maxRows)
+        List<GroovyRowResult> results = sql.rows("SELECT * FROM nginxlog.logs", offset, maxRows)
         while (results != null && results.size() > 0) {
             for (GroovyRowResult result : results) {
 
@@ -47,8 +47,18 @@ class Main {
 
                     String urlOriginal = result.url
                     List urls = urlOriginal.split(' ')
+
                     String httpMethod = urls[0]
-                    String url = urls[1]//todo отделить параметры от GET запросов
+
+                    String url = urls[1]
+
+                    String params = null
+                    int index
+                    if (httpMethod == 'GET' && (index = url.indexOf('?')) != -1) {
+                        url = url.substring(0, index)
+                        params = url.substring(index+1)
+                    }
+
                     String httpProtocolVersion = urls[2]
 
                     Long answer = Long.parseLong((String)result.answer)
@@ -62,17 +72,17 @@ class Main {
                     Double t2Ms = (t2Str == '-') ? null : (long)(Double.parseDouble(t2Str) * 1000)
 
                     sql.executeInsert("""
-                          INSERT INTO logs2 (
+                          INSERT INTO nginxlog.logs2 (
                             user, is_admin, dt,
-                            http_method, url, http_protocol_version,
+                            http_method, url, params, http_protocol_version,
                             answer, size_bytes, t1_ms, t2_ms)
                           VALUES (
                             ?, ?, ?,
-                            ?, ?, ?,
+                            ?, ?, ?, ?,
                             ?, ?, ?, ?)
                             """,
                             [user, isAdmin, dt,
-                             httpMethod, url, httpProtocolVersion,
+                             httpMethod, url, params, httpProtocolVersion,
                              answer, sizeBytes, t1Ms, t2Ms]
                     )
                 } catch (Exception e) {
@@ -81,7 +91,7 @@ class Main {
                 }
             }
             offset += maxRows
-            results = sql.rows("SELECT * FROM logs", offset, maxRows)
+            results = sql.rows("SELECT * FROM nginxlog.logs", offset, maxRows)
 
             println "${new Date()} offset=$offset"
         }
