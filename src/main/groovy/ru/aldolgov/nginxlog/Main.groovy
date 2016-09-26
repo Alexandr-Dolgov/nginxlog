@@ -48,7 +48,7 @@ class Main {
                     String urlOriginal = result.url
                     List urls = urlOriginal.split(' ')
                     String httpMethod = urls[0]
-                    String url = urls[1]
+                    String url = urls[1]//todo отделить параметры от GET запросов
                     String httpProtocolVersion = urls[2]
 
                     Long answer = Long.parseLong((String)result.answer)
