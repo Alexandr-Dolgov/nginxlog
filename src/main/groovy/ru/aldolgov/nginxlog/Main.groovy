@@ -28,7 +28,7 @@ class Main {
         //7. столбец t2 : изменить тип на long, переименовать в t2_ms
 
         int offset = 1
-        int maxRows = 5000
+        int maxRows = 1000
         List<GroovyRowResult> results = sql.rows("SELECT * FROM nginxlog.logs", offset, maxRows)
         while (results != null && results.size() > 0) {
             for (GroovyRowResult result : results) {
@@ -55,8 +55,9 @@ class Main {
                     String params = null
                     int index
                     if (httpMethod == 'GET' && (index = url.indexOf('?')) != -1) {
-                        url = url.substring(0, index)
-                        params = url.substring(index+1)
+                        String urlOld = url
+                        url = urlOld.substring(0, index)
+                        params = urlOld.substring(index+1)
                     }
 
                     String httpProtocolVersion = urls[2]
