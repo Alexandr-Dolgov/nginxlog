@@ -71,16 +71,20 @@ class Analysis {
         List s = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '50']
         String resultStr = "url\tcount\t%\tmax_s\tavg_s\t" +
                 "${-> s.collect{"<=${it}s\t<=${it}s%"}.join('\t')}\t" +
-                ">50s\t>50s%\n"
+                "url\t>50s\t>50s%\t" +
+                "${-> [1, 2, 3, 4, 5].collect {"${it}xx\t${it}xx%"}.join('\t')}\n}"
 
-        res = res.getAt(0..42)
+        int index = 0
+        res = res.getAt(0..385)
         for(GroovyRowResult r : res) {
             println(r)
 
             int count = r.count
             String url = r.url
             def time = sql.firstRow("""
-                SELECT min(l.t1_ms) as min, max(l.t1_ms) / 1000 as max, avg(l.t1_ms) / 1000 as avg
+                SELECT
+                  max(l.t1_ms) / 1000 as max,
+                  avg(l.t1_ms) / 1000 as avg
                 FROM nginxlog.logs2 l
                 WHERE l.url = ?
                 """, [url]
@@ -97,16 +101,30 @@ class Analysis {
                 )
                 rowStr += "\t${t.count}\t${t.percent}"
             }
+            rowStr += "\t${url}"
             def t = sql.firstRow("""
                     SELECT count(*) as `count`, (count(*) / ?) * 100  as `percent`
                     FROM nginxlog.logs2 l
                     WHERE l.url = ? and l.t1_ms > ?
                     """, [count, url, ms.last()]
             )
-            rowStr += "\t${t.count}\t${t.percent}\n"
+            rowStr += "\t${t.count}\t${t.percent}"
+
+            [100, 200, 300, 400, 500].each { Integer n ->
+                def states = sql.firstRow("""
+                    SELECT count(*) as `count`, (count(*) / ?) * 100  as `percent`
+                    FROM nginxlog.logs2 l
+                    WHERE l.url = ? and l.answer >= ? and l.answer < (?+100)
+                    """, [count, url, n, n]
+                )
+                rowStr += "\t${states.count}\t${states.percent}"
+            }
+            rowStr += "\n"
 
             resultStr +=rowStr
             print(rowStr)
+            println("${index} ${new Date()}")
+            index++
         }
 
         println(resultStr)
