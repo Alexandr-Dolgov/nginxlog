@@ -17,36 +17,6 @@ class Analysis {
     }
 
     static void analysis(Sql sql) {
-        def results
-
-        //сделать группировку по http_methods и посмотреть на количества
-        int allCount = sql.firstRow("SELECT COUNT(*) AS `count` FROM nginxlog.logs2").count
-        results = sql.rows("""
-            SELECT l.http_method, COUNT(*) as `count`, (COUNT(*) / ?) * 100  as `percent`
-            FROM nginxlog.logs2 AS l
-            GROUP BY l.http_method
-            ORDER BY `count` DESC
-            """, [allCount])
-
-        //сохранить количество строк с нестандартными методами
-        results = sql.rows("""
-            select count(*)
-            from nginxlog.logs2 as l
-            where l.http_method NOT IN ('GET', 'POST', 'HEAD', 'OPTIONS', 'CONNECT', 'PROPFIND', 'PUT')
-            """)
-        //удалить строки у которых http_method не стандартный
-
-        //создать отдельную таблицу url_with_id
-        //достать все строки у которых зашит в урле id и положить в отдельную таблицу
-        results = sql.rows("""
-# выбрать все url с id
-select l.id, l.url
-from nginxlog.logs2 as l
-where l.url regexp '/[[:digit:]]+\$'
-            """)
-        //в таблицу logs2 добавить столбец url_id
-        //в таблице logs2 разбить url на url и url_id
-
         //todo
         //посмотреть максимальное время запроса
         //посмотреть минимальное время запроса
@@ -60,6 +30,27 @@ where l.url regexp '/[[:digit:]]+\$'
             //доставать для всех времен запроса с интервалом в 100мс количества запросов
 
         //построить графики для каждого урла. По оси Х миллисекунды, по оси Y количества запросов
+
+        String table = "#\tquantity_urls\t>=\tsum_requests\tpercent\n"
+        int allCount = sql.firstRow("SELECT COUNT(*) AS `count` FROM nginxlog.logs2").count
+        int i = 1
+        [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000].each { Integer n ->
+            def r = sql.firstRow("""
+            select count(*) as quantity, sum(`count`) as `sum`, (sum(`count`) / ?) * 100  as `percent` from
+              (
+                select l.url, count(*) as `count`
+                from nginxlog.logs2 l
+                group by l.url
+                order by `count` desc
+              ) as t
+            where t.`count` >= ?
+            """, [allCount, n])
+            String rowStr = "$i\t${r.quantity}\t>=${n}\t${r.sum}\t${r.percent}\n"
+            println(rowStr)
+            table += rowStr
+            i++
+        }
+        println(table)
 
         String s = 'finish'
     }
