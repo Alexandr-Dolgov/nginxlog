@@ -67,15 +67,15 @@ class Analysis {
             """, [allCount]
         )
 
-        List ms = [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000]
-        List s = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '50']
+        List ms = [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000].reverse()
+        List s = ['0.1', '0.2', '0.5', '1', '2', '5', '10', '20', '50'].reverse()
         String resultStr = "url\tcount\t%\tmax_s\tavg_s\t" +
-                "${-> s.collect{"<=${it}s\t<=${it}s%"}.join('\t')}\t" +
-                "url\t>50s\t>50s%\t" +
-                "${-> [1, 2, 3, 4, 5].collect {"${it}xx\t${it}xx%"}.join('\t')}\n}"
+                "${-> s.collect{">=${it}s\t>=${it}s%"}.join('\t')}\t" +
+                "url\t<0.1s\t<0.1s%\t" +
+                "${-> [1, 2, 3, 4, 5].collect {"${it}xx\t${it}xx%"}.join('\t')}\n"
 
         int index = 0
-        res = res.getAt(0..385)
+        res = res.getAt(0..499)
         for(GroovyRowResult r : res) {
             println(r)
 
@@ -90,25 +90,26 @@ class Analysis {
                 """, [url]
             )
 
-            String rowStr = "${url}\t${count}\t${r.percent}\t${time.max}\t${time.avg}"
+            String rowStr = "${url}\t${count}"
+            rowStr += "\t${r.percent}\t${time.max}\t${time.avg}".replace('.', ',')
 
             ms.each { Integer n ->
                 def t = sql.firstRow("""
                     SELECT count(*) as `count`, (count(*) / ?) * 100  as `percent`
                     FROM nginxlog.logs2 l
-                    WHERE l.url = ? and l.t1_ms <= ?
+                    WHERE l.url = ? and l.t1_ms >= ?
                     """, [count, url, n]
                 )
-                rowStr += "\t${t.count}\t${t.percent}"
+                rowStr += "\t${t.count}\t${t.percent}".replace('.', ',')
             }
             rowStr += "\t${url}"
             def t = sql.firstRow("""
                     SELECT count(*) as `count`, (count(*) / ?) * 100  as `percent`
                     FROM nginxlog.logs2 l
-                    WHERE l.url = ? and l.t1_ms > ?
+                    WHERE l.url = ? and l.t1_ms < ?
                     """, [count, url, ms.last()]
             )
-            rowStr += "\t${t.count}\t${t.percent}"
+            rowStr += "\t${t.count}\t${t.percent}".replace('.', ',')
 
             [100, 200, 300, 400, 500].each { Integer n ->
                 def states = sql.firstRow("""
@@ -117,7 +118,7 @@ class Analysis {
                     WHERE l.url = ? and l.answer >= ? and l.answer < (?+100)
                     """, [count, url, n, n]
                 )
-                rowStr += "\t${states.count}\t${states.percent}"
+                rowStr += "\t${states.count}\t${states.percent}".replace('.', ',')
             }
             rowStr += "\n"
 
